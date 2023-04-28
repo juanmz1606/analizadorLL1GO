@@ -9,28 +9,37 @@ import (
 func main() {
 	fmt.Printf(strings.Repeat("_", 30) + "\n")
 	fmt.Printf("GRAMATICA ORIGINAL" + "\n")
-	imprimirGramatica(gramatica2)
+	imprimirGramatica(gramatica1)
 
-	var gramatica2Lista = eliminarRecursion(gramatica2)
+	var gramaticaLista = eliminarRecursion(gramatica1)
 	fmt.Printf(strings.Repeat("_", 30) + "\n")
 	fmt.Printf("ELIMINAR RECURSION" + "\n")
-	imprimirGramatica(gramatica2Lista)
+	imprimirGramatica(gramaticaLista)
 
 	fmt.Printf(strings.Repeat("_", 30) + "\n")
 	fmt.Printf("CONJUNTO DE PRIMEROS" + "\n")
-	imprimirGramatica(primeros(gramatica2Lista))
+	imprimirGramatica(primeros(gramaticaLista))
 
 	fmt.Printf(strings.Repeat("_", 30) + "\n")
 	fmt.Printf("CONJUNTO DE SIGUIENTES" + "\n")
-	imprimirGramatica(siguientes(gramatica2Lista))
-
-	fmt.Printf(strings.Repeat("_", 30) + "\n")
-	fmt.Printf("CONJUNTO DE SIGUIENTES" + "\n")
-	imprimirGramatica(siguientes(gramatica2Lista))
+	imprimirGramatica(siguientes(gramaticaLista))
 
 	fmt.Printf(strings.Repeat("_", 30) + "\n")
 	fmt.Printf("CONJUNTO DE PREDICCION" + "\n")
-	imprimirGramatica(conjunto_prediccion(gramatica2Lista, 0))
+    var conj_prediccion = conjunto_prediccion(gramaticaLista)
+	imprimirGramatica(conj_prediccion)
+
+	fmt.Printf(strings.Repeat("_", 30) + "\n")
+    if esLL1(conj_prediccion) {
+        fmt.Printf("Es una gramatica LL1")
+    }else{
+        fmt.Printf("NO es una gramatica LL1")
+    }
+	fmt.Printf("\n")
+	fmt.Printf(strings.Repeat("_", 30) + "\n")
+	cadena := "id + id * id"
+	analisisSintacticoRecursivo(cadena, gramatica1)
+    
 }
 
 var gramatica1 = []map[string][]string{
@@ -56,13 +65,11 @@ var gramatica3 = []map[string][]string{
 }
 
 var gramatica4 = []map[string][]string{
-	{"S": {"Q A"}},
-	{"A": {"or Q A", "λ"}},
-	{"Q": {"R B"}},
-	{"B": {"R B", "λ"}},
-	{"R": {"U", "x", "y"}},
-	{"U": {"z"}},
+	{"S": {"Aa", "Bb"}},
+	{"A": {"ab", "λ"}},
+	{"B": {"ba", "λ"}},
 }
+
 
 func imprimirGramatica(gramatica []map[string][]string) {
 	for _, element := range gramatica {
@@ -286,7 +293,7 @@ func listaTerminales(gramatica []map[string][]string) []string {
 	return lista_t
 }
 
-func conjunto_prediccion(gramatica []map[string][]string, imprimir_tabla int) []map[string][]string {
+func conjunto_prediccion(gramatica []map[string][]string) []map[string][]string {
 	lista_primeros := primeros(gramatica)
 	lista_siguientes := siguientes(gramatica)
 
@@ -312,14 +319,11 @@ func conjunto_prediccion(gramatica []map[string][]string, imprimir_tabla int) []
 				if arr_value[0] == "λ" {
 					siguientes_esta_prod := buscarProduccion(key, lista_siguientes)
 					conjunto_prediccion_prod_actual = append(conjunto_prediccion_prod_actual, siguientes_esta_prod...)
-					llenarFilaTabla(&lista_tabla_prod_actual, siguientes_esta_prod, derivado, lista_t)
 				} else if unicode.IsLower(rune(arr_value[0][0])) || !unicode.IsLetter(rune(arr_value[0][0])) {
 					conjunto_prediccion_prod_actual = append(conjunto_prediccion_prod_actual, arr_value[0])
-					llenarFilaTabla(&lista_tabla_prod_actual, []string{arr_value[0]}, derivado, lista_t)
 				} else {
 					primeros_esta_prod := buscarProduccion(arr_value[0], lista_primeros)
 					conjunto_prediccion_prod_actual = append(conjunto_prediccion_prod_actual, primeros_esta_prod...)
-					llenarFilaTabla(&lista_tabla_prod_actual, primeros_esta_prod, derivado, lista_t)
 				}
 			}
 		}
@@ -327,9 +331,6 @@ func conjunto_prediccion(gramatica []map[string][]string, imprimir_tabla int) []
 		conjunto_pred = append(conjunto_pred, map[string][]string{keys(produccion)[0]: conjunto_prediccion_prod_actual})
 	}
 
-	if imprimir_tabla == 1 {
-		tabla_analisis_sintactico(lista_t, valores_tabla_conjunto_pred)
-	}
 	return conjunto_pred
 }
 
@@ -339,23 +340,6 @@ func keys(m map[string][]string) []string {
 		keys = append(keys, k)
 	}
 	return keys
-}
-
-func tabla_analisis_sintactico(encabezados []string, valores [][]string) {
-	encabezados = append([]string{"NT/VT"}, encabezados...)
-	for _, v := range valores {
-		fmt.Println(strings.Join(v, " | "))
-	}
-}
-
-func llenarFilaTabla(lista_tabla_prod *[]string, terminales_a_anadir []string, valor string, lista_terminales []string) {
-	for _, terminal := range lista_terminales {
-		for _, t := range terminales_a_anadir {
-			if t == terminal {
-				(*lista_tabla_prod)[getIndex(terminal, lista_terminales)+1] = valor
-			}
-		}
-	}
 }
 
 func getIndex(val string, arr []string) int {
@@ -384,4 +368,120 @@ func stringInSlice(s string, slice []string) bool {
 		}
 	}
 	return false
+}
+
+func esLL1(conjunto_prediccion []map[string][]string) bool {
+    esLL1 := true
+
+    for _, produccion := range conjunto_prediccion {
+        repetidosLL1 := false
+        for _, value := range produccion {
+            prodSinRepetidos := make(map[string]bool)
+
+            for _, derivado := range value {
+                arrDerivado := strings.Split(derivado, " ")
+                primero := arrDerivado[0]
+
+                if prodSinRepetidos[primero] {
+                    repetidosLL1 = true
+                    break
+                }
+
+                prodSinRepetidos[primero] = true
+            }
+
+            if repetidosLL1 {
+                esLL1 = false
+                break
+            }
+        }
+
+        if !esLL1 {
+            break
+        }
+    }
+
+    return esLL1
+}
+
+
+// Función que realiza el análisis sintáctico de una cadena con una gramática LL(1) no recursiva.
+func buscarProduccionAnalizador(nombre_produccion string, gramatica []map[string][]string) map[string][]string {
+    for _, produccion := range gramatica {
+        for no_terminal, derivados := range produccion {
+            if no_terminal == nombre_produccion {
+                return map[string][]string{no_terminal: derivados}
+            }
+        }
+    }
+    return nil
+}
+
+func analisisSintacticoRecursivo(cadena string, gramatica []map[string][]string) bool {
+
+    if esLL1(gramatica1) {
+        conjunto_pred := conjunto_prediccion(gramatica1)
+
+        // Construir la tabla de análisis sintáctico
+        tabla := make(map[string]map[string]string)
+        for _, produccion := range conjunto_pred {
+            for no_terminal, predicciones := range produccion {
+                tabla[no_terminal] = make(map[string]string)
+                for _, prediccion := range predicciones {
+                    tabla[no_terminal][prediccion] = keys(buscarProduccionAnalizador(no_terminal, gramatica1))[0]
+                }
+            }
+        }
+
+        // Analizador sintáctico LL(1)
+        pila := []string{"$", keys(buscarProduccionAnalizador("E", gramatica1))[0]}
+        cadena = cadena + " $"
+        i := 0
+        for len(pila) > 0 {
+            if pila[len(pila)-1] == cadena[i:i+1] {
+                pila = pila[:len(pila)-1]
+                i++
+            } else {
+                no_terminal := pila[len(pila)-1]
+                entrada := cadena[i:i+1]
+                if _, ok := tabla[no_terminal][entrada]; ok {
+                    pila = pila[:len(pila)-1]
+                    if tabla[no_terminal][entrada] != "λ" {
+                        produccion := strings.Split(tabla[no_terminal][entrada], " ")
+                        pila = append(pila, reverse(produccion)...)
+                    }
+                } else {
+                    fmt.Println("La cadena no pertenece a la gramática")
+                    return false
+                }
+            }
+        }
+        if len(pila) == 0 && i == len(cadena)-1 {
+            fmt.Println("La cadena pertenece a la gramática")
+            return true
+        }
+    } else {
+        fmt.Println("La gramática no es LL(1)")
+        return false
+    }
+	return false
+}
+
+// Función que retorna una copia del slice dado, pero en orden inverso.
+func reverse(s []string) []string {
+    r := make([]string, len(s))
+    for i, j := 0, len(s)-1; i <= j; i, j = i+1, j-1 {
+        r[i], r[j] = s[j], s[i]
+    }
+    return r
+}
+
+// Función que retorna true si el slice contiene el elemento dado, y false en caso contrario.
+func contiene(s []string, elem string) bool {
+    for _, v := range s {
+        if v == elem {
+            return true
+        }
+    }
+    return false
 }
