@@ -6,6 +6,11 @@ import (
 	"unicode"
 )
 
+/*
+La función BuscarProduccion toma como entrada el nombre de una producción
+y una gramática en forma de una lista de mapas
+y devuelve una lista de los elementos que conforman la producción.
+*/
 func BuscarProduccion(nombre_produccion string, gramatica []map[string][]string) []string {
 	elementos_produccion := make([]string, 0)
 	for _, prod := range gramatica {
@@ -16,6 +21,11 @@ func BuscarProduccion(nombre_produccion string, gramatica []map[string][]string)
 	return elementos_produccion
 }
 
+/*
+La función RemoveElement toma como entrada una lista de elementos
+y un elemento a remover de la lista.
+Devuelve una lista con todos los elementos de la lista original excepto el elemento especificado.
+*/
 func RemoveElement(slice []string, element string) []string {
 	result := make([]string, 0, len(slice))
 	for _, s := range slice {
@@ -26,18 +36,10 @@ func RemoveElement(slice []string, element string) []string {
 	return result
 }
 
-func ListaNoTerminales(gramatica []map[string][]string) []string {
-	lista_nt := make([]string, 0)
-	for _, produccion := range gramatica {
-		for key := range produccion {
-			if !stringInSlice(key, lista_nt) {
-				lista_nt = append(lista_nt, key)
-			}
-		}
-	}
-	return lista_nt
-}
-
+/*
+La función ListaTerminales toma como entrada una gramática en forma de una lista de mapas
+y devuelve una lista de todos los terminales en la gramática.
+*/
 func ListaTerminales(gramatica []map[string][]string) []string {
 	lista_t := []string{"$"}
 	for _, produccion := range gramatica {
@@ -57,6 +59,23 @@ func ListaTerminales(gramatica []map[string][]string) []string {
 	return lista_t
 }
 
+func ListaNoTerminales(gramatica []map[string][]string) []string {
+	lista_nt := make([]string, 0)
+	for _, produccion := range gramatica {
+		for key := range produccion {
+			if !stringInSlice(key, lista_nt) {
+				lista_nt = append(lista_nt, key)
+			}
+		}
+	}
+	return lista_nt
+}
+
+/*
+	La función Conjunto_prediccion toma como entrada una gramática en forma de una lista de mapas
+
+y devuelve el conjunto de predicción de la gramática.
+*/
 func Conjunto_prediccion(gramatica []map[string][]string) []map[string][]string {
 	lista_primeros := Primeros(gramatica)
 	lista_siguientes := Siguientes(gramatica)
@@ -118,6 +137,7 @@ func indexOf(arr []string, elem string) int {
 	return -1
 }
 
+// ListKeys devuelve una lista de las claves de un mapa.
 func ListKeys(m map[string][]string) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -126,6 +146,7 @@ func ListKeys(m map[string][]string) []string {
 	return keys
 }
 
+// contains verifica si un elemento se encuentra en una lista.
 func contains(arr []string, element string) bool {
 	for _, v := range arr {
 		if v == element {
@@ -135,6 +156,7 @@ func contains(arr []string, element string) bool {
 	return false
 }
 
+// Keys devuelve una lista de las claves de un mapa.
 func Keys(m map[string][]string) []string {
 	keys := []string{}
 	for k := range m {
@@ -143,6 +165,7 @@ func Keys(m map[string][]string) []string {
 	return keys
 }
 
+// GetIndex devuelve el índice de un elemento en una lista.
 func GetIndex(val string, arr []string) int {
 	for i, v := range arr {
 		if v == val {
@@ -152,6 +175,7 @@ func GetIndex(val string, arr []string) int {
 	return -1
 }
 
+// stringInSlice verifica si un string está en una lista.
 func stringInSlice(s string, slice []string) bool {
 	for _, value := range slice {
 		if value == s {
